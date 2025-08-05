@@ -1,0 +1,175 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Model files (large binaries)
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.bin
+*.model
+*.onnx
+*.pb
+*.tflite
+*.h5
+*.hdf5
+
+# 3D model files
+*.glb
+*.gltf
+*.fbx
+*.obj
+*.mtl
+*.dae
+*.3ds
+*.blend
+*.blend1
+*.stl
+*.ply
+*.wrl
+*.x3d
+
+# Audio/Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.flac
+*.ogg
+*.m4a
+
+# Image files (large ones)
+*.tiff
+*.tif
+*.bmp
+*.exr
+*.hdr
+*.raw
+*.cr2
+*.nef
+*.arw
+*.dng
+
+# Archives
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.7z
+*.rar
+
+# ComfyUI specific
+models/checkpoints/*.safetensors
+models/checkpoints/*.ckpt
+models/vae/*.safetensors
+models/vae/*.pth
+models/loras/*.safetensors
+models/controlnet/*.safetensors
+models/upscale_models/*.pt
+models/upscale_models/*.pth
+models/diffusion_models/*.safetensors
+models/embeddings/*.pt
+models/embeddings/*.safetensors
+models/hypernetworks/*.pt
+models/gligen/*.safetensors
+models/text_encoders/*.safetensors
+models/unet/*.safetensors
+models/clip/*.safetensors
+models/clip_vision/*.safetensors
+models/photomaker/*.bin
+models/style_models/*.safetensors
+models/vae_approx/*.pth
+models/RMBG/*.pth
+
+# Output directories
+output/
+temp/
+ComfyUI/output/
+ComfyUI/temp/
+ComfyUI/input/
+*/api_server/test/
+
+# Logs and databases
+*.log
+*.db
+*.sqlite
+*.sqlite3
+ComfyUI/user/comfyui.db
+ComfyUI/user/*.log
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Custom node wheels
+custom_nodes/*/wheels/
+*.whl
+
+# uv lock files for dependencies
+uv.lock
+
+# Large dataset files
+*.tar
+*.tar.gz
+datasets/
+data/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# PyTorch JIT compiled models
+*.jit
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Memory dumps and core files
+core.*
+*.dump
