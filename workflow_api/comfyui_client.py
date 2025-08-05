@@ -89,33 +89,44 @@ class WorkflowManager:
     def set_input_image(self, image_filename: str) -> 'WorkflowManager':
         """Set the input image filename."""
         # Node 15: LoadImage
+        if "inputs" not in self.workflow["15"]:
+            self.workflow["15"]["inputs"] = {}
         self.workflow["15"]["inputs"]["image"] = image_filename
+        # Also update widgets_values for LoadImage node
+        self.workflow["15"]["widgets_values"] = [image_filename, "image"]
         return self
     
     def set_prompt(self, prompt: str, negative_prompt: Optional[str] = None) -> 'WorkflowManager':
         """Set the text prompt for texture generation."""
         # Node 4: DiffusersIGMVSampler
-        self.workflow["4"]["inputs"]["prompt"] = prompt
-        if negative_prompt:
-            self.workflow["4"]["inputs"]["negative_prompt"] = negative_prompt
+        if "inputs" not in self.workflow["4"]:
+            self.workflow["4"]["inputs"] = {}
+            
+        # Update widget values (these are the actual values used)
+        current_widgets = self.workflow["4"]["widgets_values"]
+        if len(current_widgets) >= 2:
+            current_widgets[0] = prompt  # prompt
+            if negative_prompt:
+                current_widgets[1] = negative_prompt  # negative_prompt
+        
         return self
     
     def set_image_size(self, size: int) -> 'WorkflowManager':
         """Set the image size for multiview generation."""
         # Node 18: INTConstant for image size
-        self.workflow["18"]["inputs"]["value"] = size
+        self.workflow["18"]["widgets_values"] = [size]
         return self
     
     def set_mesh_input_size(self, size: int) -> 'WorkflowManager':
         """Set the mesh input image size."""
         # Node 77: INTConstant for mesh image size
-        self.workflow["77"]["inputs"]["value"] = size
+        self.workflow["77"]["widgets_values"] = [size]
         return self
     
     def set_outline_size(self, size: int) -> 'WorkflowManager':
         """Set the outline thickness."""
         # Node 92: INTConstant for outline
-        self.workflow["92"]["inputs"]["value"] = size
+        self.workflow["92"]["widgets_values"] = [size]
         return self
     
     def set_generation_parameters(self, steps: Optional[int] = None, 
@@ -123,18 +134,22 @@ class WorkflowManager:
                                  cfg_scale: Optional[float] = None) -> 'WorkflowManager':
         """Set generation parameters."""
         if steps is not None:
-            # Node 4: DiffusersIGMVSampler steps
-            self.workflow["4"]["inputs"]["steps"] = steps
-            # Node 59: Hy3DGenerateMesh steps  
-            self.workflow["59"]["inputs"]["steps"] = steps
+            # Node 4: DiffusersIGMVSampler steps (widget index 8)
+            if len(self.workflow["4"]["widgets_values"]) > 8:
+                self.workflow["4"]["widgets_values"][8] = steps
+            # Node 59: Hy3DGenerateMesh steps (widget index 1)
+            if len(self.workflow["59"]["widgets_values"]) > 1:
+                self.workflow["59"]["widgets_values"][1] = steps
         
         if guidance_scale is not None:
-            # Node 59: Hy3DGenerateMesh guidance_scale
-            self.workflow["59"]["inputs"]["guidance_scale"] = guidance_scale
+            # Node 59: Hy3DGenerateMesh guidance_scale (widget index 0)
+            if len(self.workflow["59"]["widgets_values"]) > 0:
+                self.workflow["59"]["widgets_values"][0] = guidance_scale
         
         if cfg_scale is not None:
-            # Node 4: DiffusersIGMVSampler cfg
-            self.workflow["4"]["inputs"]["cfg"] = cfg_scale
+            # Node 4: DiffusersIGMVSampler cfg (widget index 9)
+            if len(self.workflow["4"]["widgets_values"]) > 9:
+                self.workflow["4"]["widgets_values"][9] = cfg_scale
         
         return self
     
@@ -143,23 +158,26 @@ class WorkflowManager:
         if seed is None or seed == -1:
             seed = random.randint(1, 1000000)
         
-        # Node 4: DiffusersIGMVSampler seed
-        self.workflow["4"]["inputs"]["seed"] = seed
-        # Node 59: Hy3DGenerateMesh seed
-        self.workflow["59"]["inputs"]["seed"] = seed
+        # Node 4: DiffusersIGMVSampler seed (widget index 11)
+        if len(self.workflow["4"]["widgets_values"]) > 11:
+            self.workflow["4"]["widgets_values"][11] = seed
+        # Node 59: Hy3DGenerateMesh seed (widget index 2) 
+        if len(self.workflow["59"]["widgets_values"]) > 2:
+            self.workflow["59"]["widgets_values"][2] = seed
         
         return self
     
     def set_model(self, model_name: str) -> 'WorkflowManager':
         """Set the base diffusion model."""
         # Node 9: easy ckptNames
-        self.workflow["9"]["inputs"]["ckpt_name"] = model_name
+        self.workflow["9"]["widgets_values"] = [model_name]
         return self
     
     def set_pose_type(self, pose_type: str) -> 'WorkflowManager':
         """Set the rest pose type for rigging."""
-        # Node 97: MakeItAnimatable
-        self.workflow["97"]["inputs"]["rest_pose_type"] = pose_type
+        # Node 97: MakeItAnimatable (widget index 6)
+        if len(self.workflow["97"]["widgets_values"]) > 6:
+            self.workflow["97"]["widgets_values"][6] = pose_type
         return self
     
     def disable_rigging(self) -> 'WorkflowManager':
