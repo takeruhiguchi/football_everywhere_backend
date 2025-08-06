@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-3d-convert"
+description = "ComfyUI-3D-Covert is a 3D File Format Conversion Extension based on 3dconvert.nsdt.cloud-API. It provides a node ConvertTo3DFormat currently available, is a powerful tool designed to streamline the conversion of 3D models between a wide array of file formats."
+version = "1.0.0"
+license = { file = "LICENSE" }
+
+[project.urls]
+Repository = "https://github.com/nsdtcloud3d/ComfyUI-3D-Convert"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "nsdtcloud"
+DisplayName = "ComfyUI-3D-Convert"
+Icon = ""
