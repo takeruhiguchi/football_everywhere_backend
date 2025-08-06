@@ -76,6 +76,13 @@ with open('input_image.jpg', 'rb') as f:
 status_response = requests.get(f'http://localhost:8000/job/{job_id}/status')
 status = status_response.json()
 print(f"Status: {status['status']}, Progress: {status['progress']}%")
+
+# 完了後、FBXファイルを直接ダウンロード
+if status['status'] == 'completed':
+    fbx_response = requests.get(f'http://localhost:8000/job/{job_id}/download')
+    with open('character.fbx', 'wb') as f:
+        f.write(fbx_response.content)
+    print("FBXファイルをダウンロードしました")
 ```
 
 ### 4. 詳細な例

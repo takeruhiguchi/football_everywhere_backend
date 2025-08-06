@@ -150,27 +150,52 @@ async def process_generation_job(job_id: str, image_path: str, params: Dict[str,
             jobs[job_id]["progress"] = progress
             await asyncio.sleep(5)  # Simulate processing time
         
-        # Get final results - wait for ComfyUI completion first
-        print(f"🔍 DEBUG: Waiting for ComfyUI completion for prompt_id {prompt_id}...")
+        # Non-blocking check for ComfyUI completion
+        print(f"🔍 DEBUG: Checking ComfyUI completion for prompt_id {prompt_id}...")
         
-        try:
-            # Wait for completion first
-            texture_api.client.wait_for_completion(prompt_id, timeout=600)
-            print(f"🔍 DEBUG: ComfyUI completed for prompt_id {prompt_id}")
-            
-            # Then get results
-            results = texture_api.get_results(prompt_id)
-            print(f"🔍 DEBUG: Results for prompt_id {prompt_id}:")
-            print(f"  Status: {results.get('status', 'no status')}")
-            print(f"  Files count: {len(results.get('files', []))}")
-            print(f"  File types: {[f.get('type', 'no-type') for f in results.get('files', [])]}")
-            
-        except TimeoutError as e:
-            print(f"🔍 DEBUG: Timeout waiting for completion: {e}")
-            results = {"status": "timeout", "error": str(e), "files": []}
-        except Exception as e:
-            print(f"🔍 DEBUG: Error getting results: {e}")
-            results = {"status": "error", "error": str(e), "files": []}
+        max_attempts = 60  # 10 minutes with 10-second intervals
+        attempt = 0
+        results = {"status": "processing", "files": []}
+        
+        while attempt < max_attempts:
+            try:
+                # Check if prompt has completed (non-blocking)
+                history = texture_api.client.get_history(prompt_id)
+                if prompt_id in history:
+                    print(f"🔍 DEBUG: ComfyUI completed for prompt_id {prompt_id}")
+                    results = texture_api.get_results(prompt_id)
+                    print(f"🔍 DEBUG: Results for prompt_id {prompt_id}:")
+                    print(f"  Status: {results.get('status', 'no status')}")
+                    print(f"  Files count: {len(results.get('files', []))}")
+                    print(f"  File types: {[f.get('type', 'no-type') for f in results.get('files', [])]}")
+                    break
+                else:
+                    # Update progress and current stage based on waiting time
+                    progress = min(95, 60 + (attempt * 35 // max_attempts))
+                    jobs[job_id]["progress"] = progress
+                    
+                    # Update current stage based on progress
+                    if progress >= 90:
+                        jobs[job_id]["current_stage"] = "rigging"
+                    elif progress >= 80:
+                        jobs[job_id]["current_stage"] = "texture_baking"
+                    else:
+                        jobs[job_id]["current_stage"] = "generating_multiview_texture"
+                    # Only print every 6 attempts (1 minute intervals)
+                    if attempt % 6 == 0:
+                        print(f"🔍 DEBUG: Still waiting... attempt {attempt+1}/{max_attempts}")
+                    await asyncio.sleep(10)  # Non-blocking sleep
+                    attempt += 1
+                    
+            except Exception as e:
+                print(f"🔍 DEBUG: Error checking completion: {e}")
+                await asyncio.sleep(10)
+                attempt += 1
+        
+        # Handle timeout
+        if attempt >= max_attempts and results["status"] == "processing":
+            print(f"🔍 DEBUG: Timeout after {max_attempts} attempts")
+            results = {"status": "timeout", "error": "ComfyUI processing timeout", "files": []}
         
         # If no important files found, try getting results from the most recent ComfyUI execution
         non_image_files = [f for f in results.get('files', []) if f.get('type') != 'image']
@@ -364,11 +389,11 @@ async def get_job_status(job_id: str):
             files.append(file_info)
     
     # Only process results if job is completed and we haven't cached files yet
-    if not files and job["status"] == "completed" and job.get("results", {}).get("files"):
+    if not files and job["status"] == "completed":
         # Use cached fbx_files if already processed
         if "cached_fbx_files" in job:
             files = job["cached_fbx_files"]
-        else:
+        elif job.get("results", {}).get("files"):
             # Process once and cache for future requests
             for file_info in job.get("results", {}).get("files", []):
                 if file_info.get("type") == "rigged_character" and file_info.get("format") == "fbx":
@@ -382,6 +407,9 @@ async def get_job_status(job_id: str):
                         })
             # Cache the results for future requests
             job["cached_fbx_files"] = files
+        else:
+            # If no results.files, create a placeholder entry for download endpoint
+            files = [{"type": "rigged_character", "filename": "character.fbx", "format": "fbx"}]
 
     # Build minimal response based on job status
     response = {
@@ -408,6 +436,70 @@ async def get_job_status(job_id: str):
         response["failed_stage"] = job.get("failed_stage")
     
     return response
+
+
+@app.get("/job/{job_id}/download")
+async def download_character(job_id: str):
+    """Download the rigged character FBX file for a job."""
+    
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    job = jobs[job_id]
+    
+    if job["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Job not completed yet")
+    
+    # Find the FBX file
+    fbx_file = None
+    
+    # Try from cached files first
+    if "cached_fbx_files" in job and job["cached_fbx_files"]:
+        fbx_file = job["cached_fbx_files"][0]
+    # Try from job files
+    elif job.get("files"):
+        for f in job["files"]:
+            if f.get("type") == "rigged_character" and f.get("format") == "fbx":
+                fbx_file = f
+                break
+    # Try from results
+    elif job.get("results", {}).get("files"):
+        for file_info in job["results"]["files"]:
+            if file_info.get("type") == "rigged_character" and file_info.get("format") == "fbx":
+                filename = file_info.get("filename", file_info.get("path", "").split("/")[-1] if file_info.get("path") else "")
+                if filename:
+                    fbx_file = {
+                        "type": file_info["type"],
+                        "filename": filename,
+                        "path": file_info.get("path", ""),
+                        "format": file_info.get("format", "")
+                    }
+                    break
+    
+    if not fbx_file:
+        raise HTTPException(status_code=404, detail="FBX file not found for this job")
+    
+    # Determine the actual file path
+    file_path = fbx_file.get("path", "")
+    filename = fbx_file.get("filename", "character.fbx")
+    
+    if not file_path:
+        raise HTTPException(status_code=404, detail="File path not available")
+    elif not os.path.isabs(file_path):
+        # Handle relative paths
+        base_path = "/home/takeru.higuchi/TextureGeneration/ComfyUI/output"
+        file_path = os.path.join(base_path, file_path)
+    
+    # Check if file exists
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"File not found at path: {file_path}")
+    
+    # Return the file
+    return FileResponse(
+        path=file_path,
+        media_type="application/octet-stream",
+        filename=filename
+    )
 
 
 @app.get("/job/{job_id}/download/{filename}")

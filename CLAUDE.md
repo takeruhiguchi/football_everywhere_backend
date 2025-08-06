@@ -141,3 +141,8 @@ models/
 - **Make-It-Animatable**: Blender integration has segmentation fault in rigging pipeline
 - **Memory Usage**: High memory requirements for 3D and video models
 - **Frontend Updates**: Frontend repository separate from core, may have version mismatches
+
+## commit rule
+何かコードに変更を加えたら以下のコマンドでgit add&commitして変更履歴を`commit_log.md`にログを残してください
+形式は
+- yyyy/mm/dd {commit_hash}: {what you did}

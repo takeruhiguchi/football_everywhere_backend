@@ -129,17 +129,27 @@ Check the status of a character generation job.
 }
 ```
 
-### 3. Download Results
+### 3. Download Character (Simplified)
 
-**GET** `/job/{job_id}/download/{filename}`
+**GET** `/job/{job_id}/download`
 
-Download generated files.
+Download the rigged character FBX file directly using job ID only.
 
 #### Response
 - **Content-Type**: `application/octet-stream`
-- **Content-Disposition**: `attachment; filename="result.glb"`
+- **Content-Disposition**: `attachment; filename="character.fbx"`
 
-### 4. List Available Models
+### 4. Download Specific File
+
+**GET** `/job/{job_id}/download/{filename}`
+
+Download specific generated files by filename.
+
+#### Response
+- **Content-Type**: `application/octet-stream`
+- **Content-Disposition**: `attachment; filename="result.fbx"`
+
+### 5. List Available Models
 
 **GET** `/models`
 
