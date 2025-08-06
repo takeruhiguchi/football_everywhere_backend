@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "job_id": "6fec448d-c07f-4590-806f-128338ff14f2",
+  "progress": 100,
+  "processing_time": "0:02:21.435601",
+  "files": [
+    {
+      "type": "rigged_character",
+      "filename": "Hy3D_textured_00042__rigged.fbx",
+      "format": "fbx"
+    }
+  ]
+}
